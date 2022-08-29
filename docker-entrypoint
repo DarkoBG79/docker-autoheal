@@ -8,6 +8,10 @@ DOCKER_SOCK=${DOCKER_SOCK:-/var/run/docker.sock}
 UNIX_SOCK=""
 CURL_TIMEOUT=${CURL_TIMEOUT:-30}
 WEBHOOK_URL=${WEBHOOK_URL:-""}
+PUSHOVER=${PUSHOVER:-false}
+PUSHOVER_API=${PUSHOVER_API:-}
+PUSHOVER_USER=${PUSHOVER_USER:-}
+PUSHOVER_TITLE=${PUSHOVER_TITLE:-}
 
 # only use unix domain socket if no TCP endpoint is defined
 case "${DOCKER_SOCK}" in
@@ -63,7 +67,16 @@ notify_webhook() {
   if [ -n "$WEBHOOK_URL" ]
   then
     # execute webhook requests as background process to prevent healer from blocking
-    curl -X POST -H "Content-type: application/json" -d "$(generate_webhook_payload $text)"  $WEBHOOK_URL
+    curl -X POST -H "Content-type: application/json" -d "$(generate_webhook_payload $text)" $WEBHOOK_URL
+  # Pushover notification
+  elif [ "$PUSHOVER" = "true" ]
+  then
+    curl -s -d token=$PUSHOVER_API \
+            -d user=$PUSHOVER_USER \
+            --data-urlencode title="$PUSHOVER_TITLE" \
+            --data-urlencode message="$text" \
+            https://api.pushover.net/1/messages.json >/dev/null 2>&1
+    echo "$DATE Pushover - Sent notification: $text"
   fi
 }
 
@@ -73,7 +86,7 @@ generate_webhook_payload() {
   cat <<EOF
 {
   "text":"$text"
-} 
+}
 EOF
 }
 
@@ -86,12 +99,36 @@ term_handler() {
 trap 'kill $$; term_handler' SIGTERM
 
 if [ "$1" = "autoheal" ] && [ -e "$DOCKER_SOCK" ];then
+
+  # Check notification
+  if [ "$PUSHOVER" = "true" ]
+  then
+    echo "Notification - Pushover: Activated"
+      if [[ -z "${PUSHOVER_API}" || -z "${PUSHOVER_USER}" ]]; then
+      echo "Required credentials <PUSHOVER_API | PUSHOVER_USER>"
+      fi
+  else
+    echo "Notification - Pushover: Disabled"
+  fi
+
+  # Check Webhook
+  if [ -n "$WEBHOOK_URL" ]
+  then
+    echo "Notification - Webhook: Activated"
+  else
+    echo "Notification - Webhook: Disabled"
+  fi
+
   # Delayed startup
   if [ "$AUTOHEAL_START_PERIOD" -gt 0 ]
   then
   echo "Monitoring containers for unhealthy status in $AUTOHEAL_START_PERIOD second(s)"
-    sleep "$AUTOHEAL_START_PERIOD"
+    sleep "$AUTOHEAL_START_PERIOD" &
+    wait $!
   fi
+
+  # test notification
+  notify_webhook "Autoheal Startup complete !" &
 
   while true
   do
@@ -116,12 +153,13 @@ if [ "$1" = "autoheal" ] && [ -e "$DOCKER_SOCK" ];then
         then
           echo "$DATE Restarting container $CONTAINER_SHORT_ID failed" >&2
           notify_webhook "Container ${CONTAINER_NAME:1} (${CONTAINER_SHORT_ID}) found to be unhealthy. Failed to restart the container!" &
-        else 
+        else
           notify_webhook "Container ${CONTAINER_NAME:1} (${CONTAINER_SHORT_ID}) found to be unhealthy. Successfully restarted the container!" &
         fi
       fi
     done
-    sleep "$AUTOHEAL_INTERVAL"
+    sleep "$AUTOHEAL_INTERVAL" &
+    wait $!
   done
 
 else
