@@ -81,7 +81,7 @@ docker run -d \
     autoheal                                                                        
 ```
 
-### Docker compose
+## Docker compose
 ```
   ############
   ##Autoheal##
@@ -98,7 +98,7 @@ docker run -d \
       - AUTOHEAL_INTERVAL=5   # check every 5 seconds
       - CURL_TIMEOUT=30     # --max-time seconds for curl requests to Docker API
       - DOCKER_SOCK=/var/run/docker.sock   # Unix socket for curl requests to Docker API
-      - WEBHOOK_URL=$AUTOHEAL_WEBHOOK_URL  # post message to the webhook if a container was restarted (or restart failed)
+      - WEBHOOK_URL=      # post message to the webhook if a container was restarted (or restart failed)
       - PUSHOVER=false    # Pushover notification 
       - PUSHOVER_API=""   # Pushover API Key
       - PUSHOVER_USER=""  # Pushover USER KEy
