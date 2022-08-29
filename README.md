@@ -8,7 +8,7 @@ CREDIT: [https://github.com/willfarrell/docker-autoheal]
 ## Supported tags and Dockerfile links
 - [`latest` (*Dockerfile*)](https://github.com/willfarrell/docker-autoheal/blob/main/Dockerfile) - Built daily
 
-![](https://img.shields.io/docker/pulls/willfarrell/autoheal "Total docker pulls") [![](https://images.microbadger.com/badges/image/willfarrell/autoheal.svg)](http://microbadger.com/images/willfarrell/autoheal "Docker layer breakdown")
+![](https://img.shields.io/docker/pulls/darkobg/autoheal "Total docker pulls") [![](https://images.microbadger.com/badges/image/willfarrell/autoheal.svg)](http://microbadger.com/images/willfarrell/autoheal "Docker layer breakdown")
 
 ## How to use
 ### UNIX socket passthrough
@@ -18,7 +18,7 @@ docker run -d \
     --restart=always \
     -e AUTOHEAL_CONTAINER_LABEL=all \
     -v /var/run/docker.sock:/var/run/docker.sock \
-    willfarrell/autoheal
+    darkobg/autoheal
 ```
 ### TCP socket
 ```bash
@@ -28,7 +28,7 @@ docker run -d \
     -e AUTOHEAL_CONTAINER_LABEL=all \
     -e DOCKER_SOCK=tcp://HOST:PORT \
     -v /path/to/certs/:/certs/:ro \
-    willfarrell/autoheal
+    darkobg/autoheal
 ```
 a) Apply the label `autoheal=true` to your container to have it watched.
 
@@ -79,4 +79,35 @@ docker run -d \
     -e AUTOHEAL_CONTAINER_LABEL=all \
     -v /var/run/docker.sock:/var/run/docker.sock \
     autoheal                                                                        
+```
+
+### Docker compose
+```
+  ############
+  ##Autoheal##
+  ############
+
+  # Autoheal - Docker container automatic restart on healthcheck fail
+  autoheal:
+    image: darkobg/autoheal:latest
+    container_name: autoheal
+    hostname: autoheal
+    environment:
+      - AUTOHEAL_DEFAULT_STOP_TIMEOUT=30   # Docker waits max 10 seconds (the Docker default) for a container to stop before killing during restarts
+      - AUTOHEAL_START_PERIOD=60   # wait 0 seconds before first health check
+      - AUTOHEAL_INTERVAL=5   # check every 5 seconds
+      - CURL_TIMEOUT=30     # --max-time seconds for curl requests to Docker API
+      - DOCKER_SOCK=/var/run/docker.sock   # Unix socket for curl requests to Docker API
+      - WEBHOOK_URL=$AUTOHEAL_WEBHOOK_URL  # post message to the webhook if a container was restarted (or restart failed)
+      - PUSHOVER=false    # Pushover notification 
+      - PUSHOVER_API=""   # Pushover API Key
+      - PUSHOVER_USER=""  # Pushover USER KEy
+      - PUSHOVER_TITLE="" # Pushover Title
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - /etc/localtime:/etc/localtime:ro
+    labels:
+      - "autoheal=true"
+    restart: unless-stopped
+
 ```
