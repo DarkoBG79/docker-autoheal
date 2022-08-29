@@ -71,6 +71,7 @@ notify_webhook() {
   # Pushover notification
   elif [ "$PUSHOVER" = "true" ]
   then
+    DATE=$(date +%d-%m-%Y" "%H:%M:%S)
     curl -s -d token=$PUSHOVER_API \
             -d user=$PUSHOVER_USER \
             --data-urlencode title="$PUSHOVER_TITLE" \
