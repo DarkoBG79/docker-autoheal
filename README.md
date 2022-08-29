@@ -1,13 +1,12 @@
-# Docker Autoheal
+# Docker Autoheal & Pushover
 
 Monitor and restart unhealthy docker containers. 
 This functionality was proposed to be included with the addition of `HEALTHCHECK`, however didn't make the cut.
 This container is a stand-in till there is native support for `--exit-on-unhealthy` https://github.com/docker/docker/pull/22719.
 
+CREDIT: [https://github.com/willfarrell/docker-autoheal]
 ## Supported tags and Dockerfile links
 - [`latest` (*Dockerfile*)](https://github.com/willfarrell/docker-autoheal/blob/main/Dockerfile) - Built daily
-- [`1.1.0` (*Dockerfile*)](https://github.com/willfarrell/docker-autoheal/blob/1.1.0/Dockerfile)
-- [`v0.7.0` (*Dockerfile*)](https://github.com/willfarrell/docker-autoheal/blob/v0.7.0/Dockerfile)
 
 ![](https://img.shields.io/docker/pulls/willfarrell/autoheal "Total docker pulls") [![](https://images.microbadger.com/badges/image/willfarrell/autoheal.svg)](http://microbadger.com/images/willfarrell/autoheal "Docker layer breakdown")
 
@@ -61,6 +60,10 @@ AUTOHEAL_DEFAULT_STOP_TIMEOUT=10   # Docker waits max 10 seconds (the Docker def
 DOCKER_SOCK=/var/run/docker.sock   # Unix socket for curl requests to Docker API
 CURL_TIMEOUT=30     # --max-time seconds for curl requests to Docker API
 WEBHOOK_URL=""    # post message to the webhook if a container was restarted (or restart failed)
+PUSHOVER=false    # Pushover notification 
+PUSHOVER_API=""   # Pushover API Key
+PUSHOVER_USER=""  # Pushover USER KEy
+PUSHOVER_TITLE="" # Pushover Title
 ```
 
 ### Optional Container Labels
